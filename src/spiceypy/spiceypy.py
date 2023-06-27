@@ -304,8 +304,6 @@ class KernelPool:
             data = kdata(i, "all")
             if data[1] == "META" or data[2] == "":
                 self.global_kernels.append(data[0])
-        kclear()
-        furnsh(self.local_kernels)
 
     def __iter__(self):
         if isinstance(self.local_kernels, str):
@@ -314,11 +312,23 @@ class KernelPool:
             return iter(self.local_kernels)
 
     def __enter__(self):
+        kclear()
+        furnsh(self.local_kernels)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         kclear()
         furnsh(self.global_kernels)
+
+    @classmethod
+    def furnished(cls) -> List[str]:
+        """Return a list of paths/names of "currently active" kernels (excluding MKs)."""
+        kernels = []
+        for i in range(ktotal("all")):
+            path, kind, source, handle = kdata(i, "all")
+            if kind != "META":
+                kernels.append(path)
+        return kernels
 
 
 ################################################################################
