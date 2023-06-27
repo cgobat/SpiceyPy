@@ -26,7 +26,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 import functools
 import ctypes
-from typing import Callable, Iterator, Iterable, Optional, Tuple, Union, Sequence
+from typing import Callable, Iterator, Iterable, Optional, Tuple, Union, Sequence, List
 
 
 import numpy
@@ -285,8 +285,7 @@ def cell_time(cell_size) -> SpiceCell:
     return stypes.SPICETIME_CELL(cell_size)
 
 
-@contextmanager
-def KernelPool(local_kernels: Union[str, Iterable[str]]):
+class KernelPool:
     """
     Context manager for SPICE kernels.
 
@@ -298,18 +297,28 @@ def KernelPool(local_kernels: Union[str, Iterable[str]]):
     :param local_kernels: Path, or list of paths, to individual kernels and/or to meta-kernel files. Both relative, and absolute paths are accepted, but absolute paths are preferable.
 
     """
-    global_kernels = []
-    for i in range(ktotal("all")):
-        data = kdata(i, "all")
-        if data[1] == "META" or data[2] == "":
-            global_kernels.append(data[0])
-    try:
+    def __init__(self, local_kernels: Union[str, Iterable[str]]):
+        self.local_kernels = local_kernels
+        self.global_kernels = []
+        for i in range(ktotal("all")):
+            data = kdata(i, "all")
+            if data[1] == "META" or data[2] == "":
+                self.global_kernels.append(data[0])
         kclear()
-        furnsh(local_kernels)
-        yield None
-    finally:
+        furnsh(self.local_kernels)
+
+    def __iter__(self):
+        if isinstance(self.local_kernels, str):
+            return iter([self.local_kernels])
+        else:
+            return iter(self.local_kernels)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
         kclear()
-        furnsh(global_kernels)
+        furnsh(self.global_kernels)
 
 
 ################################################################################
