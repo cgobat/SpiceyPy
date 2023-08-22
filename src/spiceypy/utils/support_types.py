@@ -104,13 +104,25 @@ def to_python_string(in_string):
 
 if hasattr(datetime, "fromisoformat"):
 
-    def fromisoformat(s):
-        return datetime.fromisoformat(s + "+00:00")
+    def fromisoformat(s: str) -> datetime:
+        try:
+            return datetime.fromisoformat(s + "+00:00")
+        except Exception as exc:
+            if str(exc) == "second must be in 0..59":
+                raise ValueError(f"the requested epoch ({s} UTC) is during a leap second, which cannot be represented using a datetime object")
+            else:
+                raise
 
 else:
 
-    def fromisoformat(s):
-        return datetime.strptime(s, "%Y-%m-%dT%H:%M:%S.%f").replace(tzinfo=timezone.utc)
+    def fromisoformat(s: str) -> datetime:
+        try:
+            return datetime.strptime(s, "%Y-%m-%dT%H:%M:%S.%f").replace(tzinfo=timezone.utc)
+        except Exception as exc:
+            if str(exc) == "second must be in 0..59":
+                raise ValueError(f"the requested epoch ({s} UTC) is during a leap second, which cannot be represented using a datetime object")
+            else:
+                raise
 
 
 def empty_char_array(x_len=None, y_len=None):
