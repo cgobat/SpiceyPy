@@ -60,6 +60,7 @@ from ctypes import (
     string_at,
     POINTER,
 )
+from datetime import datetime, timezone
 
 import numpy
 from numpy import ctypeslib as numpc
@@ -99,6 +100,17 @@ def to_python_string(in_string):
         return to_python_string(in_string.value)
     else:
         return bytes.decode(string_at(in_string), errors="ignore").rstrip()
+
+
+if hasattr(datetime, "fromisoformat"):
+
+    def fromisoformat(s):
+        return datetime.fromisoformat(s + "+00:00")
+
+else:
+
+    def fromisoformat(s):
+        return datetime.strptime(s, "%Y-%m-%dT%H:%M:%S.%f").replace(tzinfo=timezone.utc)
 
 
 def empty_char_array(x_len=None, y_len=None):

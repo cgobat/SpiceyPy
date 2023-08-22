@@ -65,6 +65,7 @@ from .utils.support_types import (
     SpiceDSKDescr,
     SpiceEKAttDsc,
     SpiceEKSegSum,
+    fromisoformat,
 )
 
 # inject exceptions back into stypes for backwards compatibility
@@ -14503,17 +14504,6 @@ def datetime2et(dt: Union[Iterable[datetime], datetime]) -> Union[ndarray, float
         et = ctypes.c_double()
         libspice.utc2et_c(dt, ctypes.byref(et))
         return et.value
-
-
-if hasattr(datetime, "fromisoformat"):
-
-    def fromisoformat(s):
-        return datetime.fromisoformat(s + "+00:00")
-
-else:
-
-    def fromisoformat(s):
-        return datetime.strptime(s, "%Y-%m-%dT%H:%M:%S.%f").replace(tzinfo=timezone.utc)
 
 
 @spice_error_check
